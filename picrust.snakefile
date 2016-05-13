@@ -14,7 +14,7 @@ rule closed_otu_table:
 	output: "picrust/otu_table.biom"
 	params: dir="picrust", qiime_params="qiime_params.txt"
 	shell: "source activate qiime; \
-	        pick_closed_reference_otus.py -i {input} -o {params.dir} -a -O {threads} -p {params.qiime_params}" 
+	        pick_closed_reference_otus.py -i {input} -o {params.dir} -a -O {threads} -p {params.qiime_params} -f" 
 
 rule normalize:
 	input: rules.closed_otu_table.output 
