@@ -5,10 +5,10 @@
 # ====================================
 
 # Illumina V3-V4 protocol primers
-#fwd_primer: "TCGTCGGCAGCGTCAGATGTGTATAAGAGACAGCCTACGGGNGGCWGCAG"
-#rev_primer: "GTCTCGTGGGCTCGGAGATGTGTATAAGAGACAGGACTACHVGGGTATCTAATCC"
-#fwd_primer_rc: "CTGCWGCCNCCCGTAGGCTGTCTCTTATACACATCTGACGCTGCCGACGA"
-#rev_primer_rc: "GGATTAGATACCCBDGTAGTCCTGTCTCTTATACACATCTCCGAGCCCACGAGAC"
+fwd_primer: "TCGTCGGCAGCGTCAGATGTGTATAAGAGACAGCCTACGGGNGGCWGCAG"
+rev_primer: "GTCTCGTGGGCTCGGAGATGTGTATAAGAGACAGGACTACHVGGGTATCTAATCC"
+fwd_primer_rc: "CTGCWGCCNCCCGTAGGCTGTCTCTTATACACATCTGACGCTGCCGACGA"
+rev_primer_rc: "GGATTAGATACCCBDGTAGTCCTGTCTCTTATACACATCTCCGAGCCCACGAGAC"
 
 
 # # Surette V3 protocol
@@ -18,10 +18,10 @@
 #rev_primer_rc: "CTGCTGCCTCCCGTAGG"
 
 # Surette V3-V4 protocol
-fwd_primer: "NNNNGGACTACHVGGGTWTCTAAT"
-rev_primer: "CCTACGGGAGGCAGCAG"
-fwd_primer_rc: "ATTAGAWACCCBDGTAGTCCNNNN"
-rev_primer_rc: "CTGCTGCCTCCCGTAGG"
+# fwd_primer: "NNNNGGACTACHVGGGTWTCTAAT"
+# rev_primer: "CCTACGGGAGGCAGCAG"
+# fwd_primer_rc: "ATTAGAWACCCBDGTAGTCCNNNN"
+# rev_primer_rc: "CTGCTGCCTCCCGTAGG"
 
 # Harrison lab protocol
 #fwd_primer: "CCTACGGGNGGCWGCAG"
@@ -30,7 +30,7 @@ rev_primer_rc: "CTGCTGCCTCCCGTAGG"
 #rev_primer_rc: "GGATTAGATACCCBDGTAGTC"
 
 
-run_name: "March7" 
+run_name: "Test" 
 
 # max value for expected error for read filtering. Increase to reduce stringency.
 max_expected_error: 1.0
@@ -42,7 +42,7 @@ read_length_cutoff: 420
 num_threads: 20
 
 # Directory where the raw reads are stored
-read_directory: "data"
+read_directory: "test_data"
 
 # database for dada2::assignTaxonomy
 database: "~/databases/assignTaxonomy/rdp_train_set_14.fa.gz"
@@ -51,7 +51,7 @@ taxa_type: "rdp"
 # for the Surette lab protocol, or any other where the forward 16S primer is on the reverse read
 # in order for the taxonomy assignment to work correctly the reads need to be in the same direction
 # as the database
-revcomp: "TRUE"
+revcomp: "FALSE"
 
 # Unique sample descriptors - should be in the file names
-samples: ["Patient100A-0", "Patient101A-0", "Patient102A-0", "Patient103A-0", "Patient104A-0", "Patient51A-0", "Patient52A-0", "Patient53A-0", "Patient54A-0", "Patient55A-0", "Patient56A-0", "Patient57A-0", "Patient58A-0", "Patient59A-0", "Patient60A-0", "Patient61A-0", "Patient62A-0", "Patient63A-0", "Patient64A-0", "Patient65A-0", "Patient66A-0", "Patient67A-0", "Patient68A-0", "Patient69A-0", "Patient70A-0", "Patient71A-0", "Patient72A-0", "Patient73A-0", "Patient74A-0", "Patient75A-0", "Patient76A-0", "Patient77A-0", "Patient78A-0", "Patient79A-0", "Patient80A-0", "Patient81A-0", "Patient82A-0", "Patient83A-0", "Patient84A-0", "Patient85A-0", "Patient86A-0", "Patient87A-0", "Patient88A-0", "Patient89A-0", "Patient90A-0", "Patient91A-0", "Patient92A-0", "Patient93A-0", "Patient94A-0", "Patient95A-0", "Patient96A-0", "Patient97A-0", "Patient98A-0", "Patient99A-0"]
+samples: ["Sample1", "Sample2", "Sample3", "Sample4"]

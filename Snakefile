@@ -150,3 +150,6 @@ rule assign_taxonomy:
             
         ''')
 
+rule clean:
+    shell: "rm -rf clipped cluster logs processed results ssu_out stats"
+

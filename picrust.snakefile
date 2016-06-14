@@ -30,3 +30,7 @@ rule categorize:
 	input: rules.predict.output
 	output: "picrust/metagenome_predictions_L3.biom"
 	shell: "source activate picrust; categorize_by_function.py -i {input} -c KEGG_Pathways -l 3 -o {output}"
+
+
+rule clean:
+	shell: "rm -rf picrust/"
