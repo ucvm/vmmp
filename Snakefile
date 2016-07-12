@@ -153,3 +153,17 @@ rule assign_taxonomy:
 rule clean:
     shell: "rm -rf clipped cluster logs processed results ssu_out stats"
 
+rule print_pipeline_code:
+    run: 
+        shell("echo '# --------------------------\n# Vet Med Microbiome Pipeline\n# -----------------------\n'")
+        shell("echo '# Version: {VERSION}'")
+        shell("echo -n '# Date: '; date +'%m-%d-%Y'")
+        shell("echo '\n# Versions:\n# ---------'")
+        shell("echo -n '# '; usearch --version")
+        shell("echo -n '# cutadapt '; cutadapt --version")
+        shell("echo -n '# '; FastTree 2>&1 | grep version | sed -r 's/Usage for //' ")
+        shell("ssu-align -h 2>&1 | grep SSU-ALIGN")
+        shell("echo '\n# Code:\n'")
+        shell("snakemake -n -p -q")
+
+
