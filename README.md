@@ -29,6 +29,9 @@ As configured the snakefile will load the required dependencies using environmen
 - [ssu-align](http://eddylab.org/software/ssu-align/): 0.1.1
 - [FastTree](http://www.microbesonline.org/fasttree/): 2.1.8
 
+### A note on the taxonomy databases
+
+You'll need a copy of your database of choice formatted to be used by dada2::assignTaxonomy.  You can make this yourself (see the dada2 documentation) or use one provided by the dada2 authors (see their [tutorial](http://benjjneb.github.io/dada2/tutorial.html)).
 
 ## Config file
 
