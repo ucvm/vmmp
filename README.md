@@ -16,7 +16,6 @@ git clone https://github.com/ucvm/vmmp
 
 Highly recommend using virtualenv or a [conda](https://anaconda.org) virtual environment to manage your install and associated dependencies.  See the snakemake [webpage](https://bitbucket.org/johanneskoester/snakemake/wiki/Home) for details on how to do this with your snakemake install.
 
-
 ## Dependencies
 
 As configured the snakefile will load the required dependencies using environment modules installed on our local server.  As long as the dependencies below are in your path then there is no need to use the modules.  Simply comment those lines out.  Also, you'll need to comment out the `onsuccess` and `onerror` portions or replace with your own code.  The `push` command is custom script to push a notification to my [Pushover](https://pushover.net) account.
@@ -39,13 +38,11 @@ The pipeline requires a config file, written in yaml, to run.  See the provided 
 
 As of now the pipeline requires manual inspection of the quality data to determine the best parameters for quality filtering.  This is done by filtering a single sample with a range of different parameters and inspecting the results to determine the optimal setting for the expected error (-fastq_maxee) and truncation length (-fastq_trunclen) parameters provided to the usearch -fastq_filter command.  
 
-The quality check is run with `vmmp --quality_test CONFIGFILE` where you have specified in the config file which sample you'd like to use for checking. The `quality_stats.txt` file in the stats folder will contain the results.
+The quality check is run with `snakemake calc_stats` which runs the pipeline up to `calc_stats` rule. The `quality_stats.txt` file in the stats folder will contain the results.
 
 ## Running
 
-Once the quality filtering parameters have been determined and the config file constructed the pipeline can be tested with `vmmp --dryrun CONFIGFILE`.  This will test the snakemake workflow and show the steps to be run.  The actual run is started with `vmmp --cores [number of cores to use] CONFIGFILE`.
-
-Note that if you prefer not to use the vmmp python script interface you can of course run snakemake directly with the provided snakefile.  All output will be the same.
+Once the quality filtering parameters have been determined and the config file constructed the pipeline can be tested with `snakemake -n -p` which will print out the commands to be run without actually running them.  If all looks good you can run the pipeline with `snakmake` or add the `-j` option with the required number of cores.  If you want to run the pipeline on your local cluster you can do that too as snakemake has cluster support built in (see the snakemake documentation). 
 
 
 ## Results
@@ -68,6 +65,10 @@ Most of the preprocessing steps for creating the OTU table are as outlined on th
 11. Assign taxonomy with RDP classifer as implemented in `dada2::assignTaxonomy`, using the specified database 
 12. Load all results into phyloseq object ready for analysis 
 
+## Provenance
+
+To get a list of all the versions of the software used along with the pipeline version and a list of shell commands run by the pipeline type `snakemake print_pipeline_code`.
+
 ## Future development
 
 This pipeline will evolve as the analysis tools for 16S data evolve.  New tools and features will be developed in a separate branch, with master remaining stable.  
@@ -77,3 +78,4 @@ This pipeline will evolve as the analysis tools for 16S data evolve.  New tools 
 Support is being added to generate a [PICRUSt](http://picrust.github.io/picrust/) analysis.  This is picrust.Snakefile and it takes the filtered and merged reads from the main pipeline to create a 'closed reference' OTU table with Greengenes as the reference.  This is the only way to run picrust (as per their documentation) and although potentially useful will need to be interpreted carefully.
 
 Picrust analysis depends on Qiime 1.9.1 and PICRUSt 1.0.0
+
