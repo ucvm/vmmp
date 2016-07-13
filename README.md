@@ -31,7 +31,7 @@ As configured the snakefile will load the required dependencies using environmen
 
 ### A note on the taxonomy databases
 
-You'll need a copy of your database of choice formatted to be used by dada2::assignTaxonomy.  You can make this yourself (see the dada2 [documentation](http://benjjneb.github.io/dada2/index.html)) or use one provided by the dada2 authors (see their [taxonomy documentation](http://benjjneb.github.io/dada2/assign.html)).
+You'll need a copy of your database of choice formatted to be used by dada2::assignTaxonomy.  You can make this yourself or use one provided by the dada2 authors (see the [documentation](http://benjjneb.github.io/dada2/assign.html)).
 
 ## Config file
 
