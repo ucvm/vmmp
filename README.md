@@ -55,12 +55,12 @@ There are various intermediate folders including a folder with log files that ca
 
 ## Pipeline summary
 
-Most of the preprocessing steps for creating the OTU table are as outlined on the UPARSE [webpage](http://drive5.com/usearch/manual/uparse_pipeline.html).  A detailed flow chart is shown in vmmp.png and the basic steps are as follows.
+Most of the preprocessing steps for creating the OTU table are as outlined on the UPARSE [webpage](http://drive5.com/usearch/manual/uparse_pipeline.html).  The basic steps are as follows.
 
 1. Clipping the forward and reverse 16S primers, and any adaptor contamination, with cutadapt
 2. Merge the forward and reverse reads with usearch
 3. Filter with expected error method and truncate sequences at fixed length
-5. Dereplicate and  with usearch
+5. Dereplicate with usearch
 6. Cluster with `usearch -cluster_otus -minsize 2`
 8. Map reads to OTUs with `usearch -usearch_global -biomout`
 9. Align OTUs with ssu-align and mask with ssu-mask
