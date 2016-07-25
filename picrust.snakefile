@@ -2,13 +2,9 @@
 
 
 rule all: 
-	input: "picrust/metagenome_predictions_L3.biom"
+	input: "picrust/metagenome_predictions_ko_L3.biom",
+               expand("picrust/metagenome_predictions_{type}.biom", type = ["ko", "cog", "rfam"])
 
-#rule rename_seqs:
-#	input: "all_seqs.fasta"
-#	output: "all_seqs_picrust.fasta"
-#	shell: "cat {input} | sed 's/barcodelabel=//g' | sed 's/;/_/g' > {output}"
-#
 rule closed_otu_table:
 	input: "processed/filtered.fa"
 	output: "picrust/otu_table.biom"
@@ -21,14 +17,27 @@ rule normalize:
 	output: "picrust/normalized_otus.biom"
 	shell: "source activate picrust; normalize_by_copy_number.py -i {input} -o {output} "
 
-rule predict:
+rule predict_ko:
 	input: rules.normalize.output
-	output: "picrust/metagenome_predictions.biom"
-	shell: "source activate picrust; predict_metagenomes.py -i {input} -o {output}"
+	output: "picrust/metagenome_predictions_ko.biom"
+	shell: "source activate picrust; \
+                predict_metagenomes.py -i {input} -o {output} -t ko -a ko_nsti_scores.txt "
 
-rule categorize:
-	input: rules.predict.output
-	output: "picrust/metagenome_predictions_L3.biom"
+rule predict_cog:
+	input: rules.normalize.output
+	output: "picrust/metagenome_predictions_cog.biom"
+	shell: "source activate picrust; \
+                predict_metagenomes.py -i {input} -o {output} -t cog -a ko_nsti_scores.txt --with_confidence"
+
+rule predict_rfam:
+	input: rules.normalize.output
+	output: "picrust/metagenome_predictions_rfam.biom"
+	shell: "source activate picrust; \
+                predict_metagenomes.py -i {input} -o {output} -t rfam -a ko_nsti_scores.txt --with_confidence"
+
+rule categorize_ko:
+	input: rules.predict_ko.output
+	output: "picrust/metagenome_predictions_ko_L3.biom"
 	shell: "source activate picrust; categorize_by_function.py -i {input} -c KEGG_Pathways -l 3 -o {output}"
 
 
