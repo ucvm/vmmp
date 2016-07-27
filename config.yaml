@@ -3,6 +3,8 @@
 
 # Primers - uncomment the correct set
 # ====================================
+# These are some common ones used at our institution.  You may need to provide your own
+# primer sequences
 
 # Illumina V3-V4 protocol primers
 fwd_primer: "TCGTCGGCAGCGTCAGATGTGTATAAGAGACAGCCTACGGGNGGCWGCAG"
@@ -50,8 +52,12 @@ taxa_type: "rdp"
 
 # for the Surette lab protocol, or any other where the forward 16S primer is on the reverse read
 # in order for the taxonomy assignment to work correctly the reads need to be in the same direction
-# as the database
+# as the database.  For most protocols this should be FALSE.  If you aren't getting any taxonomy 
+# assigned to your reads try changing this to TRUE and see if that makes a difference.
 revcomp: "FALSE"
 
-# Unique sample descriptors - should be in the file names
+# Unique sample descriptors - should be unique, present in the file names and contain no underscores.  The 
+# current standard for fastq filenaming from Illumina is to put the sample name at the beginning of the 
+# file followed by an underscore.  This is the convention the pipeline follows.  If your files are named 
+# differently then you can modify the input step in the clip_primers rule in the snakefile. 
 samples: ["Sample1", "Sample2", "Sample3", "Sample4"]
