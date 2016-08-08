@@ -48,6 +48,8 @@ read_directory: "test_data"
 
 # database for dada2::assignTaxonomy
 database: "~/databases/assignTaxonomy/rdp_train_set_14.fa.gz"
+
+# one of "rdp", "gg", "silva"
 taxa_type: "rdp"
 
 # for the Surette lab protocol, or any other where the forward 16S primer is on the reverse read
