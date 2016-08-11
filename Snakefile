@@ -91,7 +91,7 @@ rule tree:
     input: rules.ssu_mask.output
     output: "results/otus.tre"
     log: "logs/tree.log"
-    shell: "FastTree -nt {input} >{output} &> {log}"
+    shell: "FastTree -nt {input} >{output} 2> {log}"
 
 rule assign_taxonomy:
     input: seqs=rules.cluster.output, 
