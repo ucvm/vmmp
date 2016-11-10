@@ -16,7 +16,7 @@ module('load', 'applications/FastTree/2.1.8')
 
 configfile: "config.yaml"
 
-VERSION='1.0.1'
+VERSION='1.0.2'
 
 # **** Imports ****
 
