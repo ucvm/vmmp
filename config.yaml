@@ -34,6 +34,11 @@ rev_primer_rc: "GGATTAGATACCCBDGTAGTCCTGTCTCTTATACACATCTCCGAGCCCACGAGAC"
 
 run_name: "Test" 
 
+# inital quality trim, trim the 3' end of the reads at the given quality cutoff
+# best to keep this value low if you can to keep the 3' ends long for overlapping
+# but if you have really bad 3' qualities this can help improve the read pair merging.
+q_trim: 10
+
 # max value for expected error for read filtering. Increase to reduce stringency.
 max_expected_error: 1.0
 

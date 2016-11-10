@@ -33,7 +33,11 @@ rule clip_primers:
            r2 = lambda wildcards: glob.glob("{directory}/{sample}_*R2*.fastq*".format(directory=config["read_directory"], sample=wildcards.sample))
     output: r1="clipped/{sample}_R1.cut", r2="clipped/{sample}_R2.cut"
     log: "logs/{sample}.log"
-    shell: "cutadapt -e 0 -O 17 -g {config[fwd_primer]} -G {config[rev_primer]} -a {config[rev_primer_rc]} -A {config[fwd_primer_rc]} -o {output.r1} -p {output.r2} {input.r1} {input.r2} >> {log}"
+    shell: """
+            cutadapt -e 0 -O 17 -g {config[fwd_primer]} -G {config[rev_primer]} \
+            -a {config[rev_primer_rc]} -A {config[fwd_primer_rc]} -q {config[q_trim]} \
+            -o {output.r1} -p {output.r2} {input.r1} {input.r2} >> {log}
+            """
 
 rule merge_pairs:
     input: expand("clipped/{sample}_R1.cut", sample=config["samples"]) 
