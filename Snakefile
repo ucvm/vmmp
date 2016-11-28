@@ -7,9 +7,10 @@
 # if these are in the path already then comment this section out
 exec(open("/usr/share/Modules/init/python3.py").read())
 
-module('load', 'applications/usearch/8.1.1861')
+module('load', 'applications/usearch/9.0.2132')
 module('load', 'applications/ssu-align/0.1.1')
 module('load', 'applications/FastTree/2.1.8')
+module('load', 'applications/fastqc/0.11.3')
 
 
 # **** Variables ****
@@ -35,9 +36,23 @@ rule clip_primers:
     log: "logs/{sample}.log"
     shell: """
             cutadapt -e 0 -O 17 -g {config[fwd_primer]} -G {config[rev_primer]} \
-            -a {config[rev_primer_rc]} -A {config[fwd_primer_rc]} -q {config[q_trim]} \
+            -a {config[rev_primer_rc]} -A {config[fwd_primer_rc]} \
+            -m 50 -q {config[q_trim]} \
             -o {output.r1} -p {output.r2} {input.r1} {input.r2} >> {log}
             """
+
+rule quality_raw:
+    input: lambda wc: glob.glob("{directory}/*.fastq*".format(directory = config["read_directory"]))
+    threads: 40
+    shell: "fastqc -t {threads} -o fastqc_raw {input}"
+
+rule quality_clipped:
+    input: lambda wc: glob.glob("clipped/*.cut")
+    threads: 40
+    shell: "fastqc -t {threads} -o fastqc_clipped {input}"
+
+rule multiqc:
+    shell: "multiqc fastqc_raw fastqc_clipped"
 
 rule merge_pairs:
     input: expand("clipped/{sample}_R1.cut", sample=config["samples"]) 
@@ -113,6 +128,8 @@ rule assign_taxonomy:
             library(phyloseq)
             library(stringr)
             library(Biostrings)
+	    library(readr)
+	    library(dplyr)
 
             database = "{params.database}"
             otu_seqs = "{input.seqs}"
@@ -147,6 +164,9 @@ rule assign_taxonomy:
             }} else {{
                 stop("Could not detect taxonomy type.  Should be one of c('rdp', 'silva', 'gg')")
             }}
+	    
+	    taxa %>% as.data.frame() %>% tibble::rownames_to_column("OTU") %>% 
+	    	write_tsv("results/tax_table.txt")
 
             tax_table(data) = tax_table(taxa)
 
