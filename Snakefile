@@ -9,15 +9,14 @@ exec(open("/usr/share/Modules/init/python3.py").read())
 
 module('load', 'applications/usearch/9.0.2132')
 module('load', 'applications/ssu-align/0.1.1')
-module('load', 'applications/FastTree/2.1.8')
-module('load', 'applications/fastqc/0.11.3')
-
+#module('load', 'applications/FastTree/2.1.8')
+#module('load', 'applications/fastqc/0.11.3')
 
 # **** Variables ****
 
 configfile: "config.yaml"
 
-VERSION='1.0.2'
+VERSION='1.1.0'
 
 # **** Imports ****
 
@@ -27,32 +26,27 @@ from snakemake.utils import R, report
 # **** Rules ****
 
 rule all:
-    input: "results/phyloseq.rds", "stats/quality_stat.txt" 
+    input: "results/phyloseq.rds", "stats/quality_stat.txt", "results/otu_table.txt"
 
 rule clip_primers:
     input: r1 = lambda wildcards: glob.glob("{directory}/{sample}_*R1*.fastq*".format(directory=config["read_directory"], sample=wildcards.sample)),
            r2 = lambda wildcards: glob.glob("{directory}/{sample}_*R2*.fastq*".format(directory=config["read_directory"], sample=wildcards.sample))
     output: r1="clipped/{sample}_R1.cut", r2="clipped/{sample}_R2.cut"
     log: "logs/{sample}.log"
+    conda: "vmmp_env.yml"
     shell: """
-            cutadapt -e 0 -O 17 -g {config[fwd_primer]} -G {config[rev_primer]} \
+	    cutadapt -e 0 -O 17 -g {config[fwd_primer]} -G {config[rev_primer]} \
             -a {config[rev_primer_rc]} -A {config[fwd_primer_rc]} \
             -m 50 -q {config[q_trim]} \
             -o {output.r1} -p {output.r2} {input.r1} {input.r2} >> {log}
             """
-
-rule quality_raw:
+rule quality:
     input: lambda wc: glob.glob("{directory}/*.fastq*".format(directory = config["read_directory"]))
-    threads: 40
-    shell: "fastqc -t {threads} -o fastqc_raw {input}"
-
-rule quality_clipped:
-    input: lambda wc: glob.glob("clipped/*.cut")
-    threads: 40
-    shell: "fastqc -t {threads} -o fastqc_clipped {input}"
-
-rule multiqc:
-    shell: "multiqc fastqc_raw fastqc_clipped"
+    threads: config["num_threads"] 
+    conda: "vmmp_env.yml"
+    run:
+	shell("fastqc -t {threads} -o fastqc {input}")
+	shell("multiqc fastqc_raw fastqc")
 
 rule merge_pairs:
     input: expand("clipped/{sample}_R1.cut", sample=config["samples"]) 
@@ -78,19 +72,21 @@ rule dereplicate:
     input: rules.filter.output
     output: "cluster/uniques.fa"
     threads: config["num_threads"]
-    shell: "usearch -derep_fulllength {input} -relabel Uniq -fastaout {output} -sizeout"
+    shell: "usearch -derep_fulllength {input} -relabel Uniq -fastaout {output} -sizeout -threads {threads}"
 
 rule cluster:
     input: rules.dereplicate.output
     output: "results/otus.fa"
     log: "logs/cluster.log"
-    shell: "usearch -cluster_otus {input} -otus {output} -relabel OTU -minsize 2 -log {log}"
+    threads: config["num_threads"]
+    shell: "usearch -cluster_otus {input} -otus {output} -relabel OTU -minsize 2 -log {log} -threads {threads}"
 
 rule make_otutab:
-    input: seqs=rules.merge_pairs.output, db=rules.cluster.output
-    output: "results/otu_table.biom"
+    input: seqs = rules.merge_pairs.output, db = rules.cluster.output
+    output: biom = "results/otu_table.biom", txt = "results/otu_table.txt"
     threads: config["num_threads"]
-    shell: "usearch -usearch_global {input.seqs} -db {input.db} -threads {threads} -strand plus -id 0.97 -biomout {output}"
+    shell: "usearch -usearch_global {input.seqs} -db {input.db} -threads {threads} -strand plus -id 0.97 \
+             -biomout {output.biom} -otutabout {output.txt}"
 
 rule ssu_align:
     input: rules.cluster.output
@@ -110,26 +106,30 @@ rule tree:
     input: rules.ssu_mask.output
     output: "results/otus.tre"
     log: "logs/tree.log"
+    conda: "vmmp_env.yml"
     shell: "FastTree -nt {input} >{output} 2> {log}"
 
 rule assign_taxonomy:
     input: seqs=rules.cluster.output, 
-           otutab=rules.make_otutab.output,
+           otutab=rules.make_otutab.output.biom,
            tree=rules.tree.output
     output: "results/phyloseq.rds"
     params: database=config["database"], 
             revcomp=config["revcomp"],
             taxa_type=config["taxa_type"]
+    conda: "vmmp_env.yml"
     run:
         R('''
             library(dada2)
-            library(phangorn)
             library(ape)
             library(phyloseq)
             library(stringr)
             library(Biostrings)
 	    library(readr)
 	    library(dplyr)
+
+	    # install phangorn if needed because conda doesn't have it yet
+	    if (!require("phangorn")) install.packages("phangorn", repos = "http://cran.rstudio.com")
 
             database = "{params.database}"
             otu_seqs = "{input.seqs}"
@@ -140,7 +140,7 @@ rule assign_taxonomy:
             out_file = "{output}"
 
             tree = read.tree(tree_file)
-            tree = midpoint(tree)
+            tree = phangorn::midpoint(tree)
             write.tree(tree, tree_file)
 
             data = import_biom(otu_tab, tree_file, otu_seqs)
