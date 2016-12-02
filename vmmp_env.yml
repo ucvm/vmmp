@@ -1,0 +1,20 @@
+name: vmmp
+channels:
+ - bioconda
+ - conda-forge
+ - r
+ - defaults
+dependencies:
+ - r
+ - r-dplyr=0.4.3=r3.3.1_0
+ - r-readr
+ - bioconductor-phyloseq
+ - r-tibble
+ - curl=7.48
+ - python=3.5
+ - cutadapt
+ - fastqc
+ - fasttree
+ - snakemake=3.9
+ - multiqc
+ - rpy2=2.7.8

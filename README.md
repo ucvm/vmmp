@@ -8,13 +8,23 @@ This repository is provided for reference purposes for publications that use thi
 
 ## Install
 
-Clone this repository to a location of your choosing.  That's it.  
+Clone this repository to a location of your choosing.
 
 ```
 git clone https://github.com/ucvm/vmmp
 ```
 
-Highly recommend using virtualenv or a [conda](https://anaconda.org) virtual environment to manage your install and associated dependencies.  See the snakemake [webpage](https://bitbucket.org/johanneskoester/snakemake/wiki/Home) for details on how to do this with your snakemake install.
+The recommended way to run the pipeline is to use the [conda](https://anaconda.org)  See the snakemake [webpage](https://bitbucket.org/johanneskoester/snakemake/wiki/Home) for details on how to do this with your snakemake install.
+
+Almost all dependencies can be installed using the provided conda environment file `vmmp_env.yml`.  It will create a new environment called `vmmp`.
+
+```
+conda env create -f vmmp_env.yml
+```
+
+As of now the R package `dada2` needs to be installed directly from Biocondutor due to dependy issues.
+
+Once everything is installed you can: `source activate vmmp` then run snakemake.  Only usearch and ssu-align will need to be installed manually.
 
 ## Dependencies
 
@@ -22,7 +32,7 @@ As configured the snakefile will load the required dependencies using environmen
 
 
 - Python: 3 and above
-- [Snakemake](https://bitbucket.org/johanneskoester/snakemake): 3.4.1
+- [Snakemake](https://bitbucket.org/johanneskoester/snakemake): 3.9.0
 - [usearch](http://www.drive5.com/usearch/download.html): 8.1.1861
 - [cutadapt](http://cutadapt.readthedocs.org/en/stable/): 1.8.3
 - R: 3.3.2 with the following packages installed: phangorn, ape, phyloseq, dada2, stringr, Biostrings

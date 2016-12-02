@@ -44,9 +44,7 @@ rule quality:
     input: lambda wc: glob.glob("{directory}/*.fastq*".format(directory = config["read_directory"]))
     threads: config["num_threads"] 
     conda: "vmmp_env.yml"
-    run:
-	shell("fastqc -t {threads} -o fastqc {input}")
-	shell("multiqc fastqc_raw fastqc")
+    shell: "fastqc -t {threads} -o fastqc {input}; multiqc fastqc"
 
 rule merge_pairs:
     input: expand("clipped/{sample}_R1.cut", sample=config["samples"]) 
@@ -131,6 +129,9 @@ rule assign_taxonomy:
 	    # install phangorn if needed because conda doesn't have it yet
 	    if (!require("phangorn")) install.packages("phangorn", repos = "http://cran.rstudio.com")
 
+	    # install tibble manually, becuase of conda stupidness
+	    if (!require("tibble")) install.packages("tibble", repos = "http://cran.rstudio.com")
+	
             database = "{params.database}"
             otu_seqs = "{input.seqs}"
             revcomp = {params.revcomp}

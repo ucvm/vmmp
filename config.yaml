@@ -32,24 +32,26 @@ rev_primer_rc: "GGATTAGATACCCBDGTAGTCCTGTCTCTTATACACATCTCCGAGCCCACGAGAC"
 #rev_primer_rc: "GGATTAGATACCCBDGTAGTC"
 
 
-run_name: "Test" 
+run_name: "161101_M01716_0051_000000000-AWBUR" 
 
 # inital quality trim, trim the 3' end of the reads at the given quality cutoff
 # best to keep this value low if you can to keep the 3' ends long for overlapping
-# but if you have really bad 3' qualities this can help improve the read pair merging.
-q_trim: 10
+# # but if you have really bad 3' qualities this can help improve the read pair merging
+q_trim: 20
 
 # max value for expected error for read filtering. Increase to reduce stringency.
 max_expected_error: 1.0
 
 # Truncate all reads at this length
-read_length_cutoff: 420 
+read_length_cutoff: 400
 
-# number of threads for multi-threaded applications - overriden by -j option to snakemake
+# number of threads for multi-threaded applications 
+# overriden by -j option to snakemake when running multithreaded
+# number of threads per-node when submitting to cluster
 num_threads: 20
 
 # Directory where the raw reads are stored
-read_directory: "test_data"
+read_directory: "../../raw_sequence_data/161101_M01716_0051_000000000-AWBUR/fastq"
 
 # database for dada2::assignTaxonomy
 database: "~/databases/assignTaxonomy/rdp_train_set_14.fa.gz"
@@ -67,4 +69,4 @@ revcomp: "FALSE"
 # current standard for fastq filenaming from Illumina is to put the sample name at the beginning of the 
 # file followed by an underscore.  This is the convention the pipeline follows.  If your files are named 
 # differently then you can modify the input step in the clip_primers rule in the snakefile. 
-samples: ["Sample1", "Sample2", "Sample3", "Sample4"]
+samples: ["b1003036m1", "b1003036m2", "b1003036v1", "b1003036v2", "b1003036v3", "b1003036v4", "b1003036v5", "b1003044v1", "b1003044v2", "b1201047m1", "b1201047m2", "b1201047v1", "b1201047v2", "b1201047v3", "b1201047v4", "b1201047v5", "b1201048m1", "b1201048m2", "b1201048v1", "b1201048v2", "b1201048v3", "b1201048v4", "b1201048v5", "b1201049m1", "b1201049m2", "b1201049ned", "b1201049v1", "b1201049v2", "b1201049v3", "b1201049v4", "b1201049v5", "b1201050m1", "b1201050m2", "b1201050v1", "b1201050v2", "b1201050v3", "b1201050v4", "b1201050v5", "b1201051m1", "b1201051m2", "b1201051v1", "b1201051v2", "b1201051v3", "b1201051v4", "b1201051v5", "b1201053m1", "b1201053m2", "b1201053v1", "b1201053v2", "b1201053v3", "b1201053v4", "b1201053v5", "b1201054m1", "b1201054m2", "b1201054v1", "b1201054v2", "b1201054v3", "b1201054v4", "b1201054v5", "b1201055m1", "b1201055v1", "b1201055v2", "b1201055v3", "b1201055v4", "b1713026M1", "b1713026M2", "b1713026V1", "b1713026V2", "b1713026V3", "b1713026V4", "b1713026V5", "b1713027M1", "b1713027M2", "b1713027V2", "b1713027V3", "b1713027V4", "b1713027V5", "b1713029m1", "b1713029m2", "b1713029V1", "b1713029V2", "b1713029V3", "b1713029V4", "b1713029v5", "b1713031m1", "b1713031m2", "b1713031v1", "b1713031v2", "b1713031v3", "b1713031v4", "b1713031v5", "b2752013m1", "b2752013v1", "b2752013v2", "b2752013v4", "NTC"]
