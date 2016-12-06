@@ -131,61 +131,7 @@ rule assign_taxonomy:
     params: database=config["database"], 
             revcomp=config["revcomp"],
             taxa_type=config["taxa_type"]
-    run:
-        R('''
-            library(dada2)
-            library(ape)
-            library(phyloseq)
-            library(stringr)
-            library(Biostrings)
-	    library(readr)
-	    library(dplyr)
-
-	    # install phangorn if needed because conda doesn't have it yet
-	    if (!require("phangorn")) install.packages("phangorn", repos = "https://cran.rstudio.com")
-
-            database = "{params.database}"
-            otu_seqs = "{input.seqs}"
-            revcomp = {params.revcomp}
-            otu_tab = "{input.otutab}"
-            tree_file = "{input.tree}"
-            taxa_type = "{params.taxa_type}"
-            out_file = "{output}"
-
-            tree = read.tree(tree_file)
-            tree = phangorn::midpoint(tree)
-            write.tree(tree, tree_file)
-
-            data = import_biom(otu_tab, tree_file, otu_seqs)
-
-            seqs = refseq(data)
-            if (revcomp) seqs = reverseComplement(seqs)
-            seqs = as.character(seqs)
-
-            if (taxa_type == "rdp" | taxa_type == "silva") {{
-                taxa = assignTaxonomy(seqs, database)
-                rownames(taxa) = names(seqs)
-                colnames(taxa) = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus")
-            }} else if (taxa_type == "gg") {{
-                taxa = assignTaxonomy(seqs, database)
-                taxa = apply(taxa, 2, function(x) {{
-                    y = str_match(x, "[kpcofgs]__(.*)")[,2]
-                    replace(y, y == "", NA)
-                    }})
-                colnames(taxa) = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
-                rownames(taxa) = names(seqs)
-            }} else {{
-                stop("Could not detect taxonomy type.  Should be one of c('rdp', 'silva', 'gg')")
-            }}
-	    
-	    taxa %>% as.data.frame() %>% tibble::rownames_to_column("OTU") %>% 
-	    	write_tsv("results/tax_table.txt")
-
-            tax_table(data) = tax_table(taxa)
-
-            saveRDS(data, out_file)
-            
-        ''')
+    shell: "Rscript --vanilla assign_taxonomy.R {params.database} {input.seqs} {params.revcomp} {input.otutab} {input.tree} {params.taxa_type} {output}"
 
 rule qc_report:
     input: fastqc_data = rules.multiqc.output,
@@ -194,20 +140,9 @@ rule qc_report:
     output: "results/QC_report_{}.html".format(config["run_name"])
     params: runID = config["run_name"]
     shell: "Rscript --vanilla compile_QC_report.R {output} {input.fastqc_data} {params.runID} {input.merge_log} {input.filter_log}"
-#    run:
-#    	R('''
-#	  rmarkdown::render(input = "QC_report.Rmd", output = "{output}",
-#	    params = list(fastqc_data = "{input.fastqc_data}",
-#	     	          runID = "{parmas.runID}",
-#			  merge_log = "{input.merge_log}",
-#			  filter_log = "{input.filter_log}")
-#	    )
-#
-#	  ''')
-#
 
 rule clean:
-    shell: "rm -rf clipped cluster logs processed results ssu_out stats"
+    shell: "rm -rf clipped cluster logs processed results ssu_out stats fastqc.done"
 
 rule print_pipeline_code:
     run: 
@@ -219,7 +154,11 @@ rule print_pipeline_code:
         shell("echo -n '# cutadapt '; cutadapt --version")
         shell("echo -n '# '; FastTree 2>&1 | grep version | sed -r 's/Usage for //' ")
         shell("ssu-align -h 2>&1 | grep SSU-ALIGN")
+	shell("conda list")
         shell("echo '\n# Code:\n'")
         shell("snakemake -n -p -q")
 
+rule print_conda_env:
+    run:
+        shell("conda env export")
 

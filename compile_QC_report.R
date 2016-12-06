@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
 
 args = commandArgs(trailingOnly=TRUE)
-print(args)
 rmarkdown::render(input = "QC_report.Rmd", output_file = args[1],
 	    params = list(fastqc_data = args[2],
 	     	          runID = args[3],
