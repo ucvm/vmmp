@@ -8,6 +8,8 @@ dependencies:
  - r
  - r-dplyr=0.4.3=r3.3.1_0
  - r-readr
+ - r-tidyr
+ - r-DT
  - bioconductor-phyloseq
  - r-tibble
  - curl=7.48

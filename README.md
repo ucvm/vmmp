@@ -24,6 +24,10 @@ conda env create -f vmmp_env.yml
 
 As of now the R package `dada2` needs to be installed directly from Biocondutor due to dependy issues.
 
+Also these R packages are not available on conda and have to be installed directly
+ - pander
+ - phangorn
+
 Once everything is installed you can: `source activate vmmp` then run snakemake.  Only usearch and ssu-align will need to be installed manually.
 
 ## Dependencies

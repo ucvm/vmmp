@@ -18,56 +18,73 @@ configfile: "config.yaml"
 
 VERSION='1.1.0'
 
+# **** Conda ****
+
+# set location of conda install - being explicit about this avoids problems with multiple conda installs
+CONDA="~/miniconda3/bin/"
+
+# assumes env called 'vmmp' already created, use the provided vmmp_env.yml file to create
+ENV="source {CONDA}/activate vmmp".format(CONDA = CONDA)
+
+# prefix shell commands with the above source command
+shell.prefix(ENV + '; ')
+
+
 # **** Imports ****
+
 
 import glob
 from snakemake.utils import R, report
 
+
 # **** Rules ****
 
 rule all:
-    input: "results/phyloseq.rds", "stats/quality_stat.txt", "results/otu_table.txt"
+    input: "results/phyloseq.rds", "stats/quality_stat.txt", "results/otu_table.txt",
+           "results/QC_report_{}.html".format(config["run_name"])
 
 rule clip_primers:
-    input: r1 = lambda wildcards: glob.glob("{directory}/{sample}_*R1*.fastq*".format(directory=config["read_directory"], sample=wildcards.sample)),
-           r2 = lambda wildcards: glob.glob("{directory}/{sample}_*R2*.fastq*".format(directory=config["read_directory"], sample=wildcards.sample))
+    input: r1 = lambda wc: glob.glob("{dir}/{sample}_*R1*.fastq*".format(dir=config["read_directory"], sample=wc.sample)),
+           r2 = lambda wc: glob.glob("{dir}/{sample}_*R2*.fastq*".format(dir=config["read_directory"], sample=wc.sample))
     output: r1="clipped/{sample}_R1.cut", r2="clipped/{sample}_R2.cut"
     log: "logs/{sample}.log"
-    conda: "vmmp_env.yml"
-    shell: """
+    shell: """ 
 	    cutadapt -e 0 -O 17 -g {config[fwd_primer]} -G {config[rev_primer]} \
             -a {config[rev_primer_rc]} -A {config[fwd_primer_rc]} \
             -m 50 -q {config[q_trim]} \
             -o {output.r1} -p {output.r2} {input.r1} {input.r2} >> {log}
             """
-rule quality:
-    input: lambda wc: glob.glob("{directory}/*.fastq*".format(directory = config["read_directory"]))
+rule fastqc:
+    input: lambda wc: glob.glob("{dir}/*.fastq*".format(dir = config["read_directory"]))
+    output: touch("fastqc.done")
     threads: config["num_threads"] 
-    conda: "vmmp_env.yml"
-    shell: "fastqc -t {threads} -o fastqc {input}; multiqc fastqc"
+    shell: "mkdir -p fastqc; fastqc -t {threads} -o fastqc {input}"
+
+rule multiqc:
+    input: "fastqc.done"
+    output: "multiqc_data/multiqc_fastqc.txt"
+    shell: "multiqc -f fastqc"
 
 rule merge_pairs:
     input: expand("clipped/{sample}_R1.cut", sample=config["samples"]) 
-    output: "processed/merged.fq" 
-    log: "logs/merged.log"
+    output: merged = "processed/merged.fq", log = "logs/merged.log"
     threads: config["num_threads"]
-    shell: "usearch -fastq_mergepairs {input} -fastqout {output[0]} -relabel @ -threads {threads} -report {log}"
+    shell: "usearch -fastq_mergepairs {input} -fastqout {output.merged} -relabel @ -threads {threads} -report {output.log}"
 
 rule calc_stats:
-    input: rules.merge_pairs.output
+    input: rules.merge_pairs.output.merged
     output: "stats/quality_stat.txt"
     threads: config["num_threads"]
     shell: "usearch -fastq_eestats2 {input} -output {output} -threads {threads} -length_cutoffs '100,*,10'"
 
 rule filter:
-    input: rules.merge_pairs.output
-    output: "processed/filtered.fa"
-    log: "logs/filter.log"
+    input: rules.merge_pairs.output.merged
+    output: filtered = "processed/filtered.fa", log = "logs/filter.log"
     threads: config["num_threads"]
-    shell: "usearch -fastq_filter {input} -fastaout {output} -fastq_maxee {config[max_expected_error]} -fastq_trunclen {config[read_length_cutoff]} -threads {threads} -log {log}"
+    shell: "usearch -fastq_filter {input} -fastaout {output.filtered} -fastq_maxee {config[max_expected_error]} -fastq_trunclen {config[read_length_cutoff]} -threads {threads} -log {output.log}"
 
 rule dereplicate:
-    input: rules.filter.output
+    input: rules.filter.output.filtered
     output: "cluster/uniques.fa"
     threads: config["num_threads"]
     shell: "usearch -derep_fulllength {input} -relabel Uniq -fastaout {output} -sizeout -threads {threads}"
@@ -80,7 +97,7 @@ rule cluster:
     shell: "usearch -cluster_otus {input} -otus {output} -relabel OTU -minsize 2 -log {log} -threads {threads}"
 
 rule make_otutab:
-    input: seqs = rules.merge_pairs.output, db = rules.cluster.output
+    input: seqs = rules.merge_pairs.output.merged, db = rules.cluster.output
     output: biom = "results/otu_table.biom", txt = "results/otu_table.txt"
     threads: config["num_threads"]
     shell: "usearch -usearch_global {input.seqs} -db {input.db} -threads {threads} -strand plus -id 0.97 \
@@ -104,7 +121,6 @@ rule tree:
     input: rules.ssu_mask.output
     output: "results/otus.tre"
     log: "logs/tree.log"
-    conda: "vmmp_env.yml"
     shell: "FastTree -nt {input} >{output} 2> {log}"
 
 rule assign_taxonomy:
@@ -115,7 +131,6 @@ rule assign_taxonomy:
     params: database=config["database"], 
             revcomp=config["revcomp"],
             taxa_type=config["taxa_type"]
-    conda: "vmmp_env.yml"
     run:
         R('''
             library(dada2)
@@ -127,11 +142,8 @@ rule assign_taxonomy:
 	    library(dplyr)
 
 	    # install phangorn if needed because conda doesn't have it yet
-	    if (!require("phangorn")) install.packages("phangorn", repos = "http://cran.rstudio.com")
+	    if (!require("phangorn")) install.packages("phangorn", repos = "https://cran.rstudio.com")
 
-	    # install tibble manually, becuase of conda stupidness
-	    if (!require("tibble")) install.packages("tibble", repos = "http://cran.rstudio.com")
-	
             database = "{params.database}"
             otu_seqs = "{input.seqs}"
             revcomp = {params.revcomp}
@@ -174,6 +186,24 @@ rule assign_taxonomy:
             saveRDS(data, out_file)
             
         ''')
+
+rule qc_report:
+    input: fastqc_data = rules.multiqc.output,
+       	   merge_log = rules.merge_pairs.output.log,
+	   filter_log = rules.filter.output.log
+    output: "results/QC_report_{}.html".format(config["run_name"])
+    params: runID = config["run_name"]
+    run:
+    	R('''
+	  rmarkdown::render(input = "QC_report.Rmd", output = "{output}",
+	    params = list(fastqc_data = "{input.fastqc_data}",
+	     	          runID = "{parmas.runID}",
+			  merge_log = "{input.merge_log}",
+			  filter_log = "{input.filter_log}")
+	    )
+
+	  ''')
+
 
 rule clean:
     shell: "rm -rf clipped cluster logs processed results ssu_out stats"
