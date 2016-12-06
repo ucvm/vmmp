@@ -1,0 +1,144 @@
+---
+title: "Quality Report"
+output: 
+  html_document:
+    theme: lumen
+params:
+  fastqc_data: NA
+  runID: NA
+  merge_log: NA
+  filter_log: NA
+---
+
+```{r knitrOptions, message=FALSE, echo=FALSE}
+library(knitr)
+opts_chunk$set(warning = FALSE, message = FALSE, cache = FALSE, fig.width = 14, 
+							 fig.height = 8, echo = FALSE)
+```
+
+```{r}
+if (!require("pander")) install.packages("pander", repos = "https://cran.rstudio.com")
+library(tidyr)
+library(dplyr)
+library(readr)
+library(stringr)
+library(DT)
+library(pander)
+```
+
+
+```{r}
+data_frame(
+	`Run ID` = params$runID,
+	Date = date()
+) %>% pander(justify = 'll')
+```
+
+
+## QC Stats
+```{r}
+# parse fastqc
+fastqc_data = read_tsv(params$fastqc_data)
+
+fastqc_data = fastqc_data %>% 
+	mutate(type = ifelse(str_detect(Sample, "cut"), "Number after primer trim", "Number of raw reads")) %>% 
+	dplyr::select(Sample, `Total Sequences`, type) %>% 
+	tidyr::extract(Sample, "Sample", "^(.*?)_") %>% 
+	distinct() %>% 
+	spread(type, `Total Sequences`)
+```
+
+```{r}
+# parse merge log
+merged_log = read_lines(params$merge_log)
+merged_log = merged_log[merged_log != ""]
+
+merge = "Merge"
+sample_index = 1
+index = 1
+Sample = c()
+total_pairs = c()
+merged_pairs = c()
+
+while (merge == "Merge") {
+	
+	sample_row = merged_log[index + 3]
+	numbers_row = merged_log[index + 4]
+	
+	Sample[sample_index] = str_match(sample_row, " Relabel with (.*)\\.#")[,2]	
+	nums = str_match(numbers_row, " ([0-9]+) / ([0-9]+) .*")
+
+	
+	merged_pairs[sample_index] = nums[2]
+	total_pairs[sample_index] = nums[3]
+	
+	
+	index = index + 5
+	sample_index = sample_index + 1
+	
+	if (merged_log[index] == "Merge") {
+		merge = "Merge"
+	} else {
+		merge = "no"
+	}
+}
+
+merged_pairs = as.integer(merged_pairs)
+total_pairs = as.integer(total_pairs)
+
+merge_info = data_frame(Sample, `Number of merged pairs` = merged_pairs, 
+												`Percent merged` = round((merged_pairs / total_pairs), 2))
+```
+
+```{r}
+all = left_join(fastqc_data, merge_info) %>% 
+	dplyr::select(Sample, `Number of raw reads`, everything()) 
+```
+
+```{r}
+all %>% 
+    filter(Sample != "NTC") %>% 
+    arrange(desc(`Number of merged pairs`)) %>% 
+    datatable(extensions = 'Buttons', 
+    	      options = list(
+	          dom = 'Bfrtip',
+    		  buttons = list(list(
+       		      extend = 'excel',
+                      filename = paste0("QC_Report_",params$runID),
+		      text = "Download Excel")),
+    		   pageLength = nrow(all))) %>% 
+    formatPercentage("Percent merged") %>% 
+    formatStyle("Percent merged", backgroundColor = styleInterval(c(0.25), c('red', 'clear'))) %>% 
+    formatStyle("Number of merged pairs", backgroundColor = styleInterval(c(1000), c('red', 'clear'))) %>%
+    formatStyle("Number of raw reads", backgroundColor = styleInterval(c(1000), c('red', 'clear'))) %>% 
+    formatStyle("Number of merged pairs", background = styleColorBar(all$`Number of merged pairs`, "steelblue"))
+```
+
+
+
+```{r, eval=FALSE}
+keep_lines = c()
+filtered_log = read_lines(params$filter_log)
+keep = FALSE
+for (i in 1:length(filtered_log)) {
+	if (keep) {
+		keep_lines = c(keep_lines, filtered_log[i])
+	}
+	if (filtered_log[i] == "") {
+		keep = !keep
+	}
+}
+
+keep_lines = keep_lines[-length(keep_lines)]
+```
+
+
+```{r, results='asis', eval=FALSE}
+filt_stats = keep_lines %>% str_trim() %>% str_split_fixed("  ", 2) %>% as.data.frame(stringsAsFactors = FALSE)
+filt_stats %>% mutate(V1 = as.numeric(V1)) %>% 
+	dplyr::rename(`Number of Reads` = V1, Category = V2) %>% 
+	pander(justify = 'rl', big.mark = ',', style = 'rmarkdown')
+```
+
+
+

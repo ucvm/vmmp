@@ -16,7 +16,7 @@ module('load', 'applications/ssu-align/0.1.1')
 
 configfile: "config.yaml"
 
-VERSION='1.1.0'
+VERSION='1.2.0'
 
 # **** Conda ****
 
@@ -193,17 +193,18 @@ rule qc_report:
 	   filter_log = rules.filter.output.log
     output: "results/QC_report_{}.html".format(config["run_name"])
     params: runID = config["run_name"]
-    run:
-    	R('''
-	  rmarkdown::render(input = "QC_report.Rmd", output = "{output}",
-	    params = list(fastqc_data = "{input.fastqc_data}",
-	     	          runID = "{parmas.runID}",
-			  merge_log = "{input.merge_log}",
-			  filter_log = "{input.filter_log}")
-	    )
-
-	  ''')
-
+    shell: "Rscript --vanilla compile_QC_report.R {output} {input.fastqc_data} {params.runID} {input.merge_log} {input.filter_log}"
+#    run:
+#    	R('''
+#	  rmarkdown::render(input = "QC_report.Rmd", output = "{output}",
+#	    params = list(fastqc_data = "{input.fastqc_data}",
+#	     	          runID = "{parmas.runID}",
+#			  merge_log = "{input.merge_log}",
+#			  filter_log = "{input.filter_log}")
+#	    )
+#
+#	  ''')
+#
 
 rule clean:
     shell: "rm -rf clipped cluster logs processed results ssu_out stats"
