@@ -32,7 +32,7 @@ rev_primer_rc: "GGATTAGATACCCBDGTAGTCCTGTCTCTTATACACATCTCCGAGCCCACGAGAC"
 #rev_primer_rc: "GGATTAGATACCCBDGTAGTC"
 
 
-run_name: "161125_M01716_0054_000000000-AWBVR" 
+run_name: "test" 
 
 # inital quality trim, trim the 3' end of the reads at the given quality cutoff
 # best to keep this value low if you can to keep the 3' ends long for overlapping
@@ -51,7 +51,10 @@ read_length_cutoff: 400
 num_threads: 20
 
 # Directory where the raw reads are stored
-read_directory: "../../raw_sequence_data/161125_M01716_0054_000000000-AWBVR/fastq"
+read_directory: "test_data"
+
+# Analysis type: make otu clusters "cluster", or denoised zOTUs "unoise"
+analysis_type: "unoise"
 
 # database for dada2::assignTaxonomy
 database: "~/databases/assignTaxonomy/rdp_train_set_14.fa.gz"
